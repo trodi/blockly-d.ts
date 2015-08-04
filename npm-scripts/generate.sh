@@ -29,16 +29,19 @@ mkdir output
 mv *.d.ts output/
 
 # combine output files into one master file
-cat output/*.d.ts > blockly-core.d.ts
+cat output/*.d.ts > blockly-core.d.ts.tmp
 
 # remove reference paths since they are all in one file
-sed -i '.bak' '/reference path/d' blockly-core.d.ts
+sed -i '.bak' '/reference path/d' blockly-core.d.ts.tmp
+
+# add required definition header
+cat ../header.txt > blockly-core.d.ts
+cat blockly-core.d.ts.tmp >> blockly-core.d.ts
 
 # move to dist directory
 mkdir ../dist/
 mv blockly-core.d.ts ../dist/
 
 # remove build artifacts
-# rm out.txt
 cd ..
 rm -rf tmp/
