@@ -540,6 +540,13 @@ declare module Blockly {
             width: any /*missing*/;
     
             /**
+             * Original location of block being dragged.
+             * @type {goog.math.Coordinate}
+             * @private
+             */
+            dragStartXY_: goog.math.Coordinate;
+    
+            /**
              * Create and initialize the SVG representation of the block.
              * May be called more than once.
              */
@@ -1070,18 +1077,24 @@ declare module Blockly.BlockSvg {
 
     /**
      * Animate a cloned block and eventually dispose of it.
+     * This is a class method, not an instace method since the original block has
+     * been destroyed and is no longer accessible.
      * @param {!Element} clone SVG element to animate and dispose of.
      * @param {boolean} rtl True if RTL, false if LTR.
+     * @param {!Date} start Date of animation's start.
+     * @param {number} workspaceScale Scale of workspace.
      * @private
      */
-    function disposeUiStep_(clone: Element, rtl: boolean): void;
+    function disposeUiStep_(clone: Element, rtl: boolean, start: Date, workspaceScale: number): void;
 
     /**
      * Expand a ripple around a connection.
      * @param {!Element} ripple Element to animate.
+     * @param {!Date} start Date of animation's start.
+     * @param {number} workspaceScale Scale of workspace.
      * @private
      */
-    function connectionUiStep_(ripple: Element): void;
+    function connectionUiStep_(ripple: Element, start: Date, workspaceScale: number): void;
 }
 
 declare module Blockly {
@@ -2019,9 +2032,9 @@ declare module Blockly.Css {
 
     /**
      * Set the cursor to be displayed when over something draggable.
-     * @param {Blockly.Cursor} cursor Enum.
+     * @param {Blockly.Css.Cursor} cursor Enum.
      */
-    function setCursor(cursor: Blockly.Cursor): void;
+    function setCursor(cursor: Blockly.Css.Cursor): void;
 
     /**
      * Array making up the CSS content for Blockly.
@@ -2123,6 +2136,13 @@ declare module Blockly {
              * @return {!goog.math.Size} Height and width.
              */
             getSize(): goog.math.Size;
+    
+            /**
+             * Returns the height and width of the field,
+             * accounting for the workspace scaling.
+             * @return {!goog.math.Size} Height and width.
+             */
+            getScaledBBox_(): goog.math.Size;
     
             /**
              * Get the text from this field.
@@ -2778,6 +2798,14 @@ declare module Blockly {
 declare module Blockly.FieldTextInput {
 
     /**
+     * Point size of text.  Should match blocklyText's font-size in CSS.
+     */
+    var FONTSIZE: any /*missing*/;
+
+    /** @type {!HTMLInputElement} */
+    var htmlInput_: HTMLInputElement;
+
+    /**
      * Ensure that only a number may be entered.
      * @param {string} text The user's text.
      * @return {?string} A string representing a valid number, or null if invalid.
@@ -2886,7 +2914,7 @@ declare module Blockly {
             RTL: boolean;
     
             /**
-             * Opaque data that can be passed to removeChangeListener.
+             * Opaque data that can be passed to Blockly.unbindEvent_.
              * @type {Array.<!Array>}
              * @private
              */
@@ -2933,6 +2961,13 @@ declare module Blockly {
             CORNER_RADIUS: number;
     
             /**
+             * Top/bottom padding between scrollbar and edge of flyout background.
+             * @type {number}
+             * @const
+             */
+            SCROLLBAR_PADDING: number;
+    
+            /**
              * Creates the flyout's DOM.  Only needs to be called once.
              * @return {!Element} The flyout's SVG group.
              */
@@ -2940,10 +2975,10 @@ declare module Blockly {
     
             /**
              * Initializes the flyout.
-             * @param {!Blockly.Workspace} workspace The workspace in which to create new
-             *     blocks.
+             * @param {!Blockly.Workspace} targetWorkspace The workspace in which to create
+             *     new blocks.
              */
-            init(workspace: Blockly.Workspace): void;
+            init(targetWorkspace: Blockly.Workspace): void;
     
             /**
              * Dispose of this flyout.
@@ -4591,12 +4626,12 @@ declare module Blockly.Toolbox {
 
     class TreeSeparator extends TreeSeparator__Class { }
     /** Fake class which should be extended to avoid inheriting static properties */
-    class TreeSeparator__Class extends Blockly.Toolbox.prototype.TreeNode__Class  { 
+    class TreeSeparator__Class extends Blockly.Toolbox.TreeNode__Class  { 
     
             /**
              * A blank separator node in the tree.
              * @constructor
-             * @extends {Blockly.Toolbox.prototype.TreeNode}
+             * @extends {Blockly.Toolbox.TreeNode}
              */
             constructor();
     } 
@@ -4791,20 +4826,6 @@ declare module Blockly {
              * @constructor
              */
             constructor(workspace: Blockly.Workspace);
-    
-            /**
-             * URL of the sprite image.
-             * @type {string}
-             * @private
-             */
-            SPRITE_URL_: string;
-    
-            /**
-             * URL of the lid image.
-             * @type {string}
-             * @private
-             */
-            LID_URL_: string;
     
             /**
              * Width of both the trash can and lid images.
@@ -5035,22 +5056,26 @@ declare module Blockly {
     function getRelativeXY_(element: Element): Object;
 
     /**
-     * Return the absolute coordinates of the top-left corner of this element.
-     * The origin (0,0) is the top-left corner of the nearest SVG.
+     * Return the absolute coordinates of the top-left corner of this element,
+     * scales that after canvas SVG element, if it's a descendant.
+     * The origin (0,0) is the top-left corner of the Blockly SVG.
      * @param {!Element} element Element to find the coordinates of.
+     * @param {!Blockly.Workspace} workspace Element must be in this workspace.
      * @return {!Object} Object with .x and .y properties.
      * @private
      */
-    function getSvgXY_(element: Element): Object;
+    function getSvgXY_(element: Element, workspace: Blockly.Workspace): Object;
 
     /**
      * Helper method for creating SVG elements.
      * @param {string} name Element's tag name.
      * @param {!Object} attrs Dictionary of attribute names and values.
-     * @param {Element=} opt_parent Optional parent on which to append the element.
+     * @param {Element} parent Optional parent on which to append the element.
+     * @param {Blockly.Workspace=} opt_workspace Optional workspace for access to
+     *     context (scale...).
      * @return {!SVGElement} Newly created SVG element.
      */
-    function createSvgElement(name: string, attrs: Object, opt_parent?: Element): SVGElement;
+    function createSvgElement(name: string, attrs: Object, parent: Element, opt_workspace?: Blockly.Workspace): SVGElement;
 
     /**
      * Deselect any selections on the webpage.
@@ -5229,7 +5254,7 @@ declare module Blockly {
              * Get this warning's texts.
              * @return {string} All texts concatenated into one string.
              */
-            getAllText(): string;
+            getText(): string;
     
             /**
              * Dispose of this warning.
@@ -5330,10 +5355,13 @@ declare module Blockly {
              */
             constructor(opt_options?: Object);
     
-            /**
-             * @type {!Array.<!Blockly.Block>}
-             * @private
-             */
+            /** @type {!Object} */
+            options: Object;
+    
+            /** @type {boolean} */
+            RTL: boolean;
+    
+            /** @type {!Array.<!Blockly.Block>} */
             topBlocks_: Blockly.Block[];
     
             /**
@@ -5443,6 +5471,13 @@ declare module Blockly {
             SOUNDS_: any /*missing*/;
     
             /**
+             * Opaque data that can be passed to Blockly.unbindEvent_.
+             * @type {Array.<!Array>}
+             * @private
+             */
+            eventWrappers_: any[][];
+    
+            /**
              * Svg workspaces are user-visible (as opposed to a headless workspace).
              * @type {boolean} True if visible.  False if headless.
              */
@@ -5473,9 +5508,26 @@ declare module Blockly {
             scrollY: number;
     
             /**
-             * The workspace's trashcan (if any).
-             * @type {Blockly.Trashcan}
+             * Horizontal distance from mouse to object being dragged.
+             * @type {number}
+             * @private
              */
+            dragDeltaX_: number;
+    
+            /**
+             * Vertical distance from mouse to object being dragged.
+             * @type {number}
+             * @private
+             */
+            dragDeltaY_: number;
+    
+            /**
+             * Current scale.
+             * @type {number}
+             */
+            scale: number;
+    
+            /** @type {Blockly.Trashcan} */
             trashcan: Blockly.Trashcan;
     
             /**
@@ -5505,10 +5557,22 @@ declare module Blockly {
             addTrashcan_(): void;
     
             /**
+             * Add zoom controls.
+             * @private
+             */
+            addZoomControls_(): void;
+    
+            /** @type {Blockly.ZoomControls} */
+            zoomControls_: Blockly.ZoomControls;
+    
+            /**
              * Add a flyout.
              * @private
              */
             addFlyout_(): void;
+    
+            /** @type {Blockly.Flyout} */
+            flyout_: Blockly.Flyout;
     
             /**
              * Resize this workspace and its containing objects.
@@ -5613,6 +5677,28 @@ declare module Blockly {
             onMouseDown_(e: Event): void;
     
             /**
+             * Start tracking a drag of an object on this workspace.
+             * @param {!Event} e Mouse down event.
+             * @param {number} x Starting horizontal location of object.
+             * @param {number} y Starting vertical location of object.
+             */
+            startDrag(e: Event, x: number, y: number): void;
+    
+            /**
+             * Track a drag of an object on this workspace.
+             * @param {!Event} e Mouse move event.
+             * @return {!goog.math.Coordinate} New location of object.
+             */
+            moveDrag(e: Event): goog.math.Coordinate;
+    
+            /**
+             * Handle a mouse-wheel on SVG drawing surface.
+             * @param {!Event} e Mouse wheel event.
+             * @private
+             */
+            onMouseWheel_(e: Event): void;
+    
+            /**
              * Show the context menu for the workspace.
              * @param {!Event} e Mouse event.
              * @private
@@ -5667,6 +5753,31 @@ declare module Blockly {
              * Mark this workspace as the currently focused main workspace.
              */
             markFocused(): void;
+    
+            /**
+             * Zooming the blocks centered in (x, y) coordinate with zooming in or out.
+             * @param {number} x X coordinate of center.
+             * @param {number} y Y coordinate of center.
+             * @param {number} type Type of zooming (-1 zooming out and 1 zooming in).
+             */
+            zoom(x: number, y: number, type: number): void;
+    
+            /**
+             * Zooming the blocks centered in the center of view with zooming in or out.
+             * @param {number} type Type of zooming (-1 zooming out and 1 zooming in).
+             */
+            zoomCenter(type: number): void;
+    
+            /**
+             * Reset zooming and dragging.
+             */
+            zoomReset(): void;
+    
+            /**
+             * Updates the grid pattern.
+             * @private
+             */
+            updateGridPattern_(): void;
     } 
     
 }
@@ -5746,4 +5857,91 @@ declare module Blockly.Xml {
      * @param {!Element} xmlBlock XML block element.
      */
     function deleteNext(xmlBlock: Element): void;
+}
+
+declare module Blockly {
+
+    class ZoomControls extends ZoomControls__Class { }
+    /** Fake class which should be extended to avoid inheriting static properties */
+    class ZoomControls__Class  { 
+    
+            /**
+             * Class for a zoom controls.
+             * @param {!Blockly.Workspace} workspace The workspace to sit in.
+             * @constructor
+             */
+            constructor(workspace: Blockly.Workspace);
+    
+            /**
+             * Width of the zoom controls.
+             * @type {number}
+             * @private
+             */
+            WIDTH_: number;
+    
+            /**
+             * Height of the zoom controls.
+             * @type {number}
+             * @private
+             */
+            HEIGHT_: number;
+    
+            /**
+             * Distance between zoom controls and bottom edge of workspace.
+             * @type {number}
+             * @private
+             */
+            MARGIN_BOTTOM_: number;
+    
+            /**
+             * Distance between zoom controls and right edge of workspace.
+             * @type {number}
+             * @private
+             */
+            MARGIN_SIDE_: number;
+    
+            /**
+             * The SVG group containing the zoom controls.
+             * @type {Element}
+             * @private
+             */
+            svgGroup_: Element;
+    
+            /**
+             * Left coordinate of the zoom controls.
+             * @type {number}
+             * @private
+             */
+            left_: number;
+    
+            /**
+             * Top coordinate of the zoom controls.
+             * @type {number}
+             * @private
+             */
+            top_: number;
+    
+            /**
+             * Create the zoom controls.
+             * @return {!Element} The zoom controls SVG group.
+             */
+            createDom(): Element;
+    
+            /**
+             * Initialize the zoom controls.
+             */
+            init(): void;
+    
+            /**
+             * Dispose of this zoom controls.
+             * Unlink from all DOM elements to prevent memory leaks.
+             */
+            dispose(): void;
+    
+            /**
+             * Move the zoom controls to the bottom-right corner.
+             */
+            position(): void;
+    } 
+    
 }
