@@ -2,6 +2,7 @@
   "name": "blockly-d.ts",
   "version": "0.0.0",
   "description": "Typescript definition file generator for Google's Blockly.",
+  "license" : "MIT",
   "scripts": {
     "start": "bash npm-scripts/generate.sh"
   },
