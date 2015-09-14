@@ -1250,10 +1250,10 @@ declare module Blockly {
 
     /**
      * Source of the local clipboard.
-     * @type {Blockly.Workspace}
+     * @type {Blockly.WorkspaceSvg}
      * @private
      */
-    var clipboardSource_: Blockly.Workspace;
+    var clipboardSource_: Blockly.WorkspaceSvg;
 
     /**
      * Is the mouse dragging a block?
@@ -1765,11 +1765,42 @@ declare module Blockly {
             /** @type {!Blockly.Block} */
             sourceBlock_: Blockly.Block;
     
-            /** @type {Blockly.Connection} */
-            targetConnection: Blockly.Connection;
-    
             /** @type {number} */
             type: number;
+    
+            /**
+             * Connection this connection connects to.  Null if not connected.
+             * @type {Blockly.Connection}
+             */
+            targetConnection: Blockly.Connection;
+    
+            /**
+             * List of compatible value types.  Null if all types are compatible.
+             * @type {Array}
+             * @private
+             */
+            check_: any[];
+    
+            /**
+             * Horizontal location of this connection.
+             * @type {number}
+             * @private
+             */
+            x_: number;
+    
+            /**
+             * Vertical location of this connection.
+             * @type {number}
+             * @private
+             */
+            y_: number;
+    
+            /**
+             * Has this connection been added to the connection database?
+             * @type {boolean}
+             * @private
+             */
+            inDB_: boolean;
     
             /**
              * Sever all links to this connection (not including from the source object).
@@ -2056,7 +2087,7 @@ declare module Blockly {
             constructor(text: string);
     
             /**
-             * Maximum length of text to display before adding an ellipsis.
+             * Maximum characters of text to display before adding an ellipsis.
              */
             maxDisplayLength: any /*missing*/;
     
@@ -2362,6 +2393,20 @@ declare module Blockly {
              * @constructor
              */
             constructor(colour: string, opt_changeHandler?: Function);
+    
+            /**
+             * By default use the global constants for colours.
+             * @type {Array.<string>}
+             * @private
+             */
+            colours_: string[];
+    
+            /**
+             * By default use the global constants for columns.
+             * @type {number}
+             * @private
+             */
+            columns_: number;
     
             /**
              * Install this field on a block.
@@ -2671,10 +2716,11 @@ declare module Blockly {
             /**
              * Class for a non-editable field.
              * @param {string} text The initial content of the field.
+             * @param {string=} opt_class Optional CSS class for the field's text.
              * @extends {Blockly.Field}
              * @constructor
              */
-            constructor(text: string);
+            constructor(text: string, opt_class?: string);
     
             /**
              * Editable fields are saved by the XML renderer, non-editable fields are not.
@@ -2915,22 +2961,10 @@ declare module Blockly {
     
             /**
              * Opaque data that can be passed to Blockly.unbindEvent_.
-             * @type {Array.<!Array>}
+             * @type {!Array.<!Array>}
              * @private
              */
             eventWrappers_: any[][];
-    
-            /**
-             * @type {number}
-             * @private
-             */
-            width_: number;
-    
-            /**
-             * @type {number}
-             * @private
-             */
-            height_: number;
     
             /**
              * List of background buttons that lurk behind each block to catch clicks
@@ -2966,6 +3000,20 @@ declare module Blockly {
              * @const
              */
             SCROLLBAR_PADDING: number;
+    
+            /**
+             * Width of flyout.
+             * @type {number}
+             * @private
+             */
+            width_: number;
+    
+            /**
+             * Height of flyout.
+             * @type {number}
+             * @private
+             */
+            height_: number;
     
             /**
              * Creates the flyout's DOM.  Only needs to be called once.
@@ -3205,8 +3253,16 @@ declare module Blockly {
             /**
              * The method of indenting.  Defaults to two spaces, but language generators
              * may override this to increase indent or change to tabs.
+             * @type {string}
              */
-            INDENT: any /*missing*/;
+            INDENT: string;
+    
+            /**
+             * Comma-separated list of reserved words.
+             * @type {string}
+             * @private
+             */
+            RESERVED_WORDS_: string;
     
             /**
              * Add one or more words to the list of reserved words for this language.
@@ -3220,9 +3276,10 @@ declare module Blockly {
              * Blockly.Generator.provideFunction_.  It must not be legal code that could
              * legitimately appear in a function definition (or comment), and it must
              * not confuse the regular expression parser.
+             * @type {string}
              * @private
              */
-            FUNCTION_NAME_PLACEHOLDER_: any /*missing*/;
+            FUNCTION_NAME_PLACEHOLDER_: string;
     
             /**
              * Define a function to be included in the generated code.
@@ -3455,10 +3512,17 @@ declare module Blockly {
             /** @type {!Array.<!Blockly.Field>} */
             fieldRow: Blockly.Field[];
     
-            /** @type {number} */
+            /**
+             * Alignment of input's fields (left, right or centre).
+             * @type {number}
+             */
             align: number;
     
-            /** @type {boolean} */
+            /**
+             * Is the input visible?
+             * @type {boolean}
+             * @private
+             */
             visible_: boolean;
     
             /**
@@ -4347,6 +4411,13 @@ declare module Blockly {
             constructor(workspace: Blockly.Workspace);
     
             /**
+             * Previously recorded metrics from the workspace.
+             * @type {Object}
+             * @private
+             */
+            oldHostMetrics_: Object;
+    
+            /**
              * Dispose of this pair of scrollbars.
              * Unlink from all DOM elements to prevent memory leaks.
              */
@@ -4925,8 +4996,10 @@ declare module Blockly {
     
             /**
              * Initialize the trash can.
+             * @param {number} bottom Distance from workspace bottom to bottom of trashcan.
+             * @return {number} Distance from workspace bottom to the top of trashcan.
              */
-            init(): void;
+            init(bottom: number): number;
     
             /**
              * Dispose of this trash can.
@@ -5050,10 +5123,10 @@ declare module Blockly {
      * Return the coordinates of the top-left corner of this element relative to
      * its parent.  Only for SVG elements and children (e.g. rect, g, path).
      * @param {!Element} element SVG element to find the coordinates of.
-     * @return {!Object} Object with .x and .y properties.
+     * @return {!goog.math.Coordinate} Object with .x and .y properties.
      * @private
      */
-    function getRelativeXY_(element: Element): Object;
+    function getRelativeXY_(element: Element): goog.math.Coordinate;
 
     /**
      * Return the absolute coordinates of the top-left corner of this element,
@@ -5061,10 +5134,10 @@ declare module Blockly {
      * The origin (0,0) is the top-left corner of the Blockly SVG.
      * @param {!Element} element Element to find the coordinates of.
      * @param {!Blockly.Workspace} workspace Element must be in this workspace.
-     * @return {!Object} Object with .x and .y properties.
+     * @return {!goog.math.Coordinate} Object with .x and .y properties.
      * @private
      */
-    function getSvgXY_(element: Element, workspace: Blockly.Workspace): Object;
+    function getSvgXY_(element: Element, workspace: Blockly.Workspace): goog.math.Coordinate;
 
     /**
      * Helper method for creating SVG elements.
@@ -5160,6 +5233,20 @@ declare module Blockly.fireUiEvent {
      * @private
      */
     var DB_: Object;
+}
+
+declare module Blockly.getRelativeXY_ {
+
+    /**
+     * Static regex to pull the x,y values out of an SVG translate() directive.
+     * Note that Firefox and IE (9,10) return 'translate(12)' instead of
+     * 'translate(12, 0)'.
+     * Note that IE (9,10) returns 'translate(16 8)' instead of 'translate(16, 8)'.
+     * Note that IE has been reported to return scientific notation (0.123456e-42).
+     * @type {!RegExp}
+     * @private
+     */
+    var XY_REGEXP_: RegExp;
 }
 
 declare module Blockly.Variables {
@@ -5285,15 +5372,15 @@ declare module Blockly.WidgetDiv {
 
     /**
      * The object currently using this container.
-     * @private
      * @type {Object}
+     * @private
      */
     var owner_: Object;
 
     /**
      * Optional cleanup function set by whichever object uses the widget.
-     * @private
      * @type {Function}
+     * @private
      */
     var dispose_: Function;
 
@@ -5472,7 +5559,7 @@ declare module Blockly {
     
             /**
              * Opaque data that can be passed to Blockly.unbindEvent_.
-             * @type {Array.<!Array>}
+             * @type {!Array.<!Array>}
              * @private
              */
             eventWrappers_: any[][];
@@ -5552,15 +5639,19 @@ declare module Blockly {
     
             /**
              * Add a trashcan.
+             * @param {number} bottom Distance from workspace bottom to bottom of trashcan.
+             * @return {number} Distance from workspace bottom to the top of trashcan.
              * @private
              */
-            addTrashcan_(): void;
+            addTrashcan_(bottom: number): number;
     
             /**
              * Add zoom controls.
+             * @param {number} bottom Distance from workspace bottom to bottom of controls.
+             * @return {number} Distance from workspace bottom to the top of controls.
              * @private
              */
-            addZoomControls_(): void;
+            addZoomControls_(bottom: number): number;
     
             /** @type {Blockly.ZoomControls} */
             zoomControls_: Blockly.ZoomControls;
@@ -5929,8 +6020,10 @@ declare module Blockly {
     
             /**
              * Initialize the zoom controls.
+             * @param {number} bottom Distance from workspace bottom to bottom of controls.
+             * @return {number} Distance from workspace bottom to the top of controls.
              */
-            init(): void;
+            init(bottom: number): number;
     
             /**
              * Dispose of this zoom controls.
