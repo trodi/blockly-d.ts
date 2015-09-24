@@ -23,6 +23,9 @@ declare module Blockly {
              */
             initialize(workspace: Blockly.Workspace, prototypeName: string): void;
     
+            /** @type {string} */
+            id: string;
+    
             /**
              * Fill a block with initial values.
              * @param {!Blockly.Workspace} workspace The workspace to use.
@@ -114,13 +117,6 @@ declare module Blockly {
              * @param {boolean} bump Move the unplugged block sideways a short distance.
              */
             unplug(healStack: boolean, bump: boolean): void;
-    
-            /**
-             * Duplicate this block and its children.
-             * @return {!Blockly.Block} The duplicate.
-             * @private
-             */
-            duplicate_(): Blockly.Block;
     
             /**
              * Returns all connections originating from this block.
@@ -716,6 +712,11 @@ declare module Blockly {
             connectionUiEffect(): void;
     
             /**
+             * Play some UI effects (sound, animation) when disconnecting a block.
+             */
+            disconnectUiEffect(): void;
+    
+            /**
              * Change the colour of a block.
              */
             updateColour(): void;
@@ -941,12 +942,6 @@ declare module Blockly.BlockSvg {
     var CORNER_RADIUS: any /*missing*/;
 
     /**
-     * Minimum height of field rows.
-     * @const
-     */
-    var FIELD_HEIGHT: any /*missing*/;
-
-    /**
      * Distance from shape edge to intersect with a curved corner at 45 degrees.
      * Applies to highlighting on around the inside of a curve.
      * @const
@@ -1095,6 +1090,36 @@ declare module Blockly.BlockSvg {
      * @private
      */
     function connectionUiStep_(ripple: Element, start: Date, workspaceScale: number): void;
+
+    /**
+     * Animate a brief wiggle of a disconnected block.
+     * @param {!Element} group SVG element to animate.
+     * @param {number} magnitude Maximum degrees skew (reversed for RTL).
+     * @param {!Date} start Date of animation's start.
+     * @private
+     */
+    function disconnectUiStep_(group: Element, magnitude: number, start: Date): void;
+
+    /**
+     * Stop the disconnect UI animation immediately.
+     * @private
+     */
+    function disconnectUiStop_(): void;
+}
+
+declare module Blockly.BlockSvg.disconnectUiStop_ {
+
+    /**
+     * PID of disconnect UI animation.  There can only be one at a time.
+     * @type {number}
+     */
+    var pid: number;
+
+    /**
+     * SVG group of wobbling block.  There can only be one at a time.
+     * @type {Element}
+     */
+    var group: Element;
 }
 
 declare module Blockly {
@@ -1344,6 +1369,13 @@ declare module Blockly {
      * @private
      */
     function copy_(block: Blockly.Block): void;
+
+    /**
+     * Duplicate this block and its children.
+     * @param {!Blockly.Block} block Block to be copied.
+     * @private
+     */
+    function duplicate_(block: Blockly.Block): void;
 
     /**
      * Cancel the native context menu, unless the focus is on an HTML input widget.
@@ -2120,6 +2152,9 @@ declare module Blockly {
              */
             init(block: Blockly.Block): void;
     
+            /** @type {!Element} */
+            textElement_: Element;
+    
             /**
              * Dispose of all DOM objects belonging to this editable field.
              */
@@ -2235,9 +2270,39 @@ declare module Blockly {
 declare module Blockly.Field {
 
     /**
+     * Temporary cache of text widths.
+     * @type {Object}
+     * @private
+     */
+    var cacheWidths_: Object;
+
+    /**
+     * Number of current references to cache.
+     * @type {number}
+     * @private
+     */
+    var cacheReference_: number;
+
+    /**
      * Non-breaking space.
      */
     var NBSP: any /*missing*/;
+
+    /**
+     * Start caching field widths.  Every call to this function MUST also call
+     * stopCache.  Caches must not survive between execution threads.
+     * @type {Object}
+     * @private
+     */
+    function startCache(): void;
+
+    /**
+     * Stop caching field widths.  Unless caching was already on when the
+     * corresponding call to startCache was made.
+     * @type {number}
+     * @private
+     */
+    function stopCache(): void;
 }
 
 declare module Blockly {
@@ -5861,8 +5926,9 @@ declare module Blockly {
     
             /**
              * Reset zooming and dragging.
+             * @param {!Event} e Mouse down event.
              */
-            zoomReset(): void;
+            zoomReset(e: Event): void;
     
             /**
              * Updates the grid pattern.
