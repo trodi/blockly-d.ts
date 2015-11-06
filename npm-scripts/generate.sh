@@ -42,6 +42,11 @@ cat blockly-core.d.ts.tmp >> blockly-core.d.ts
 mkdir ../dist/
 mv blockly-core.d.ts ../dist/
 
+mkdir ../dist/blockly/
+mv blockly/blockly_compressed.js ../dist/blockly/
+mv blockly/blocks_compressed.js ../dist/blockly/
+mv blockly/msg/js/en.js ../dist/blockly/
+
 # remove build artifacts
 cd ..
 rm -rf tmp/
