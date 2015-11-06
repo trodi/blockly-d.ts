@@ -9,5 +9,8 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/trodi/blockly-d.ts.git"
+},
+  "dependencies": {
+    "typescript-closure-tools": "^0.0.4"
   }
 }

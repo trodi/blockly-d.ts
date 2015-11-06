@@ -14,15 +14,8 @@ ls *.js | sed 's:\([a-z]*[-*_*[a-z]*]*\).js:blockly/core/\1.js \1.d.ts :' | tr -
 # go back to root
 cd ../..
 
-# grab my fork and compile
-git clone https://github.com/trodi/typescript-closure-tools.git
-cd typescript-closure-tools
-npm install
-tsc --module commonjs definition-generator/src/*.ts
-cd ..
-
 # generate d.ts - run from project root
-node typescript-closure-tools/definition-generator/src/main.js --include_private true `< out.txt`
+node ../node_modules/typescript-closure-tools/definition-generator/src/main.js --include_private true `< out.txt`
 
 # create output dir and move files into it
 mkdir output
