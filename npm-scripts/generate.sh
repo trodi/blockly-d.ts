@@ -25,7 +25,7 @@ mv *.d.ts output/
 cat output/*.d.ts > blockly-core.d.ts.tmp
 
 # remove reference paths since they are all in one file
-sed -i '.bak' '/reference path/d' blockly-core.d.ts.tmp
+sed -i.bak '/reference path/d' blockly-core.d.ts.tmp
 
 # add required definition header
 cat ../header.txt > blockly-core.d.ts
