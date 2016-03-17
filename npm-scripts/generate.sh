@@ -39,6 +39,7 @@ mkdir ../dist/blockly/
 mv blockly/blockly_compressed.js ../dist/blockly/
 mv blockly/blocks_compressed.js ../dist/blockly/
 mv blockly/msg/js/en.js ../dist/blockly/
+mv blockly/media/ ../dist/blockly/
 
 # remove build artifacts
 cd ..
