@@ -3,9 +3,6 @@
   "version": "0.0.0",
   "description": "Typescript definition file generator for Google's Blockly.",
   "license": "MIT",
-  "engines": {
-    "node": "^8.11.4"
-  },
   "scripts": {
     "start": "bash npm-scripts/generate.sh"
   },
@@ -14,6 +11,6 @@
     "url": "https://github.com/trodi/blockly-d.ts.git"
   },
   "dependencies": {
-    "typescript-closure-tools": "^0.0.4"
+    "typescript-closure-tools": "^0.0.7"
   }
 }

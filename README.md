@@ -16,7 +16,6 @@ Since you currenlty can't [consume](https://www.typescriptlang.org/docs/handbook
 * [Blockly](https://github.com/google/blockly) uses the closure-library and some of the reference types found there (e.g., `goog.math`). For `tsc` to be happy, you'll have to define these referenced closure-library types. I currently don't do this for you.
 
 ## Generate Definition File
-* Note: Currently requires Node v8.x. Newer versions will fail to run.
 * `git clone https://github.com/trodi/blockly-d.ts.git`
 * `npm install`
 * `npm start`
