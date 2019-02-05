@@ -11,6 +11,16 @@ mkdir tmp
 cd tmp
 git clone https://github.com/google/blockly.git
 
+echo Enter a commit hash or enter nothing to use the latest version of blockly
+read githash
+
+if [ -n $githash ]
+then
+	cd blockly
+	git checkout $githash
+	cd ..
+fi
+
 # move to blockly core directory
 cd blockly/core
 
