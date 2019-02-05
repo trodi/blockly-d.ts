@@ -1,4 +1,10 @@
-#!/bin/bash
+#!/usr/bin/env bash
+
+# Clear tmp directory if it exist
+rm -rf tmp
+
+# Clear dist directort if it exist
+rm -rf dist
 
 #get latest blockly code
 mkdir tmp
