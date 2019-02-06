@@ -15,7 +15,7 @@ mkdir tmp
 cd tmp
 git clone https://github.com/google/blockly.git
 
-if [ -n $githash ]
+if [ -n "$githash" ]
 then
 	cd blockly
 	git checkout $githash
