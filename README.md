@@ -19,7 +19,6 @@ Since you currenlty can't [consume](https://www.typescriptlang.org/docs/handbook
 * `git clone https://github.com/trodi/blockly-d.ts.git`
 * `npm install`
 * `npm start`
-  * This will generate the definition file for the current version of [Blockly](https://github.com/google/blockly).
 * Generated files found in dist/
   * blockly-core.d.ts - The definition file generated against the latest version of [Blockly](https://github.com/google/blockly).
   * blockly - This folder contains a copy of [Blockly](https://github.com/google/blockly)'s dist files used to generate this d.ts file for reference.
