@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
+# Allow user to pick what commit hash they want to checkout
+echo Enter a commit hash or enter nothing to use the latest version of blockly
+read githash
+
 # Clear tmp directory if it exist
 rm -rf tmp
 
@@ -10,6 +14,13 @@ rm -rf dist
 mkdir tmp
 cd tmp
 git clone https://github.com/google/blockly.git
+
+if [ -n "$githash" ]
+then
+	cd blockly
+	git checkout $githash
+	cd ..
+fi
 
 # move to blockly core directory
 cd blockly/core
