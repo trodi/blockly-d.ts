@@ -24,4 +24,4 @@ Since you currenlty can't [consume](https://www.typescriptlang.org/docs/handbook
   * blockly - This folder contains a copy of [Blockly](https://github.com/google/blockly)'s dist files used to generate this d.ts file for reference.
 
 ## License
-[MIT License](LICENSE.md)
+[MIT License](LICENSE)
